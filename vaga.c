@@ -847,6 +847,7 @@ void intercalacaoOtimaUnificadaVagas(char nomeDaParticao[], int qtdParticoes, FI
         }
 
         // Salva o menor registro na saída
+
         salva_vaga(registros[idxMenor], out);
         registros[idxMenor] = le_vaga(particoes[idxMenor]);
     }
@@ -858,6 +859,7 @@ void intercalacaoOtimaUnificadaVagas(char nomeDaParticao[], int qtdParticoes, FI
         snprintf(nomeArqParticao, sizeof(nomeArqParticao), "%s%d.dat", nomeDaParticao, i);
         remove(nomeArqParticao);
     }
+
     // Fim da Fase de União das Partições Ordenadas
 
     // Liberação de memória, finalização do processo e salvando no log

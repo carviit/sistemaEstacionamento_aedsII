@@ -13,6 +13,8 @@ typedef struct Cliente
 
 } TCliente;
 
+void is(FILE *arq);
+
 void imprime_cliente(TCliente *cliente);
 
 void imprime_clientes(FILE *in);

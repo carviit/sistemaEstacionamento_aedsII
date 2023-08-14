@@ -346,6 +346,30 @@ void insertion_sort_disco_cliente(FILE *arq, int tam)
     clock_t fim = clock(); // Marca o tempo de fim do algoritmo
     double tempo = (double)(fim - inicio) / CLOCKS_PER_SEC; // Calcula o tempo de execução em segundos
 
+    // Escreve no arquivo de LOG
+    FILE *arquivo = fopen("log.txt", "a"); // Abre o arquivo em modo append (se existir)
+
+    if (arquivo == NULL) {
+        // Se não for possível abrir o arquivo, imprime uma mensagem de erro e sai
+        printf("Erro ao abrir o arquivo de log.\n");
+        return; // Não há retorno de erro, apenas uma mensagem é exibida
+    }
+
+    // Obter a hora e data atual
+    time_t rawtime;
+    struct tm *timeinfo;
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+
+    // Escreve as informações no arquivo de LOG
+    fprintf(arquivo, "\n---- Log Cliente ----\n");
+    fprintf(arquivo, "Data e hora: %s", asctime(timeinfo)); // Imprime a data e hora
+    fprintf(arquivo, "Tempo de execucao do metodo de insertion sort disco: %.2f segundos\n", tempo);
+    fprintf(arquivo, "Numero de comparacoes: %d\n", num_comparacoes);
+
+    // Fecha o arquivo de LOG
+    fclose(arquivo);
+
     printf("\nNúmero de comparações: %d\n", num_comparacoes);
     printf("Tempo de execução: %.2f segundos\n", tempo);
 }
@@ -430,24 +454,19 @@ void imprimeParticoesClientes(FILE *file, const char nomeParticao[])
 
 int selecaoSubstituicaoClientes(FILE *in, char nomeDaParticao[])
 {
-    // Registrar o tempo de início da execução
     clock_t inicio = clock();
-
-    // Variáveis para controle do processo de particionamento
     int numeroDeParticoes = 0, posicao = 0, posicaoMenorCpf = 0, menorCpf = 999999999;
-    int comparacao = 0;  // Contagem de comparações de CPFs
+    int comparacao = 0;
     int tamRegistro = tamanho_registro_cliente();
-    TCliente clientes[6];  // Array para armazenar os registros de clientes
-    int auxVetCpf[6] = {0, 0, 0, 0, 0, 0};  // Vetor auxiliar para armazenar os CPFs em memória
+    TCliente clientes[6];
+    int auxVetCpf[6] = {0, 0, 0, 0, 0, 0};
 
-    // Colocar o ponteiro do arquivo na posição inicial
     rewind(in);
 
-    // Obter o tamanho do arquivo de entrada para determinar o número total de clientes
+    // Obter o tamanho do arquivo de entrada
     int AuxArquivo = obter_tamanho_arquivo_cliente(in);
     int totalClientes = AuxArquivo / tamRegistro;
 
-    // Verificar se o arquivo de entrada está vazio
     if (totalClientes == 0)
     {
         printf("O arquivo de entrada não possui registros.\n");
@@ -456,10 +475,9 @@ int selecaoSubstituicaoClientes(FILE *in, char nomeDaParticao[])
 
     printf("Gerando partições por Seleção com Substituição...\n\n");
 
-    // Loop para a geração de partições
+    // Looping da geração de partições
     while (posicao < totalClientes)
     {
-        // Construir o nome da partição usando o nome base e um número
         char nomeParticao[100];
         char str1[100];
         char str2[100] = ".dat";
@@ -469,7 +487,6 @@ int selecaoSubstituicaoClientes(FILE *in, char nomeDaParticao[])
         strcat(nomeParticao, str1);
         strcat(nomeParticao, str2);
 
-        // Abrir a partição para escrita (modo "wb+")
         FILE *filePartition = fopen(nomeParticao, "wb+");
         if (filePartition == NULL)
         {
@@ -477,14 +494,15 @@ int selecaoSubstituicaoClientes(FILE *in, char nomeDaParticao[])
             return -1;
         }
 
-        // Vetor para controle de registros congelados na memória
+        // Vetor que irá fazer o controle das posições que serão congeladas
         int vetCongelado[6] = {0, 0, 0, 0, 0, 0};
 
         // Loop interno para selecionar elementos para a partição
         while (posicao < totalClientes)
         {
-            // Encontrar o menor CPF dentre os CPFs presentes no vetor auxiliar 'auxVetCpf'
             menorCpf = 999999999;
+
+            // Encontrar o menor CPF dentre os CPFs presentes no vetor auxiliar 'auxVetCpf'
             for (int i = 0; i < 6; ++i)
             {
                 if (menorCpf > auxVetCpf[i] && vetCongelado[i] != 1)
@@ -495,17 +513,17 @@ int selecaoSubstituicaoClientes(FILE *in, char nomeDaParticao[])
                 }
             }
 
-            // Salvar o registro com o menor CPF na partição
+            // Salvar o registro com menor CPF na partição
             salva_cliente(&clientes[posicaoMenorCpf], filePartition);
 
-            // Ler o próximo registro do arquivo de entrada
+            // Ler próximo registro do arquivo de entrada
             if (posicao < totalClientes)
             {
                 fseek(in, posicao * tamRegistro, SEEK_SET);
                 TCliente *aux = le_clientes(in);
                 if (aux == NULL)
                 {
-                    // Tratar erro na leitura
+                    // Tratar caso ocorra erro na leitura
                     printf("Erro na leitura do registro %d.\n", posicao);
                     fclose(filePartition);
                     return -1;
@@ -553,7 +571,7 @@ int selecaoSubstituicaoClientes(FILE *in, char nomeDaParticao[])
     strcat(nomeParticao, str1);
     strcat(nomeParticao, str2);
 
-    // Criar a partição final (modo "ab+")
+    // Criar a partição final
     FILE *filePartitionFinal = fopen(nomeParticao, "ab+");
     if (filePartitionFinal == NULL)
     {
@@ -561,19 +579,16 @@ int selecaoSubstituicaoClientes(FILE *in, char nomeDaParticao[])
         return -1;
     }
 
-    // Fechar a partição final
     fclose(filePartitionFinal);
 
-    // Loop para imprimir o conteúdo de cada partição gerada
+    // Looping para imprimir o conteúdo de cada partição gerada
     for (int i = 0; i <= numeroDeParticoes; ++i)
     {
-        // Construir o nome da partição
         snprintf(str1, sizeof(str1), "%d", i);
         strcpy(nomeParticao, nomeDaParticao);
         strcat(nomeParticao, str1);
         strcat(nomeParticao, str2);
 
-        // Abrir a partição para leitura e impressão
         FILE *filePartition = fopen(nomeParticao, "rb+");
         if (filePartition == NULL)
         {
@@ -581,17 +596,18 @@ int selecaoSubstituicaoClientes(FILE *in, char nomeDaParticao[])
             return -1;
         }
 
-        // Imprimir o conteúdo da partição
         imprimeParticoesClientes(filePartition, nomeParticao);
 
-        // Fechar a partição após a impressão
         fclose(filePartition);
     }
 
-    // Imprimir o tempo de execução e o número de comparações
+    // Imprimir o tempo e o número de comparações
     printf("\nTempo de execução: %.6f segundos\n", (double)(clock() - inicio) / CLOCKS_PER_SEC);
     printf("Número de comparações: %d\n", comparacao);
+
+    return numeroDeParticoes;
 }
+
 void intercalacaoOtimaUnificadaClientes(char nomeDaParticao[], int qtdParticoes, FILE *out)
 {
     FILE *particoes[qtdParticoes + 1];
@@ -654,7 +670,7 @@ void intercalacaoOtimaUnificadaClientes(char nomeDaParticao[], int qtdParticoes,
         }
 
         char nomeParticao[100];
-        char str1[100];
+        char str1[100] = "";
         char str2[100] = ".dat";
 
         int numeroParticao = qtdParticoes + 1 + grupo / 4;
