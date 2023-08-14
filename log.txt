@@ -1,0 +1,20 @@
+
+---- Log Vaga ----
+Data e hora: Sun Aug 13 23:51:33 2023
+Tempo de execucao do metodo de particao: 0.03 segundos
+Numero de comparacoes: 9233
+
+---- Log Vaga ----
+Data e hora: Sun Aug 13 23:51:33 2023
+Tempo de execucao do metodo de intercalacao otima: 0.02 segundos
+Numero de comparacoes: 35125
+
+---- Log Vaga ----
+Data e hora: Sun Aug 13 23:58:28 2023
+Tempo de execucao do metodo de particao: 0.03 segundos
+Numero de comparacoes: 9243
+
+---- Log Vaga ----
+Data e hora: Sun Aug 13 23:58:28 2023
+Tempo de execucao do metodo de intercalacao otima: 0.02 segundos
+Numero de comparacoes: 36089

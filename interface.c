@@ -86,9 +86,9 @@ void MENU(FILE *outVagas, FILE *outFuncionarios, FILE *outClientes)
         case 5:
 
             printf("\nQual BASE de DADOS deseja ORDENAR\n\n");
-            printf("1 ---- VAGAS (SELECTION SORT) \n");
+            printf("1 ---- VAGAS (SELEÇÃO POR SUBSTITUIÇÃO e INTERCALAÇÃO ÓTIMA) \n");
             printf("2 ---- FUNCIONÁRIOS (INSERTION SORT)\n");
-            printf("3 ---- CLIENTES (SELEÇÃO POR SUBSTITUIÇÃO e INTERCALAÇÃO ÓTIMA)");
+            printf("3 ---- CLIENTES (INSERTION SORT)");
 
             printf("\n\nDIGITE UMA OPCAO: ");
             fflush(stdin);
@@ -96,7 +96,8 @@ void MENU(FILE *outVagas, FILE *outFuncionarios, FILE *outClientes)
 
             if(ord == 1)
             {
-                selection_sort_disco_vaga(outVagas,base_total_vagas);
+                int parts = selecaoSubstituicaoVagas(outVagas,"P");
+                intercalacaoOtimaUnificadaVagas("P",parts, outVagas);
 
             }
             else if(ord == 2)
@@ -106,8 +107,7 @@ void MENU(FILE *outVagas, FILE *outFuncionarios, FILE *outClientes)
             }
             else
             {
-                int nParticoes = selecaoSubstituicaoClientes(outClientes,"Part");
-                intercalacaoOtimaUnificadaClientes("Part", nParticoes,outClientes);
+                insertion_sort_disco_cliente(outClientes,base_total_clientes);
             }
 
             break;

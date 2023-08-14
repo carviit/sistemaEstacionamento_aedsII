@@ -118,7 +118,7 @@ void busca_sequencial_vagas(FILE *in)
     if (found)
     {
 
-         FILE *arquivo = fopen("log.txt", "a");  // Abre o arquivo em modo append (se existir)
+        FILE *arquivo = fopen("log.txt", "a");  // Abre o arquivo em modo append (se existir)
 
         if (arquivo == NULL)
         {
@@ -544,19 +544,24 @@ void imprimeParticoesVagas(FILE *file, const char nomeParticao[])
 
 int selecaoSubstituicaoVagas(FILE *in, char nomeDaParticao[])
 {
+    // Registrar o tempo de início da execução
     clock_t inicio = clock();
+
+    // Variáveis para controle do processo de particionamento
     int numeroDeParticoes = 0, posicao = 0, posicaoMenorNumero = 0, menorNumero = INT_MAX;
     int comparacao = 0;
     int tamRegistro = tamanho_registro_vagas();
     TVaga vagas[6];
     int auxVetNumero[6] = {0, 0, 0, 0, 0, 0};
 
+    // Colocar o ponteiro do arquivo na posição inicial
     rewind(in);
 
     // Obter o tamanho do arquivo de entrada
     int AuxArquivo = obter_tamanho_arquivo_vagas(in);
     int totalVagas = AuxArquivo / tamRegistro;
 
+    // Verificar se o arquivo de entrada está vazio
     if (totalVagas == 0)
     {
         printf("O arquivo de entrada não possui registros.\n");
@@ -568,6 +573,7 @@ int selecaoSubstituicaoVagas(FILE *in, char nomeDaParticao[])
     // Looping da geração de partições
     while (posicao < totalVagas)
     {
+        // Construir o nome da partição usando o nome base e um número
         char nomeParticao[100];
         char str1[100];
         char str2[100] = ".dat";
@@ -577,6 +583,7 @@ int selecaoSubstituicaoVagas(FILE *in, char nomeDaParticao[])
         strcat(nomeParticao, str1);
         strcat(nomeParticao, str2);
 
+        // Abrir a partição para escrita (modo "wb+")
         FILE *filePartition = fopen(nomeParticao, "wb+");
         if (filePartition == NULL)
         {
@@ -691,29 +698,55 @@ int selecaoSubstituicaoVagas(FILE *in, char nomeDaParticao[])
         fclose(filePartition);
     }
 
-    // Imprimir o tempo e o número de comparações
+    //Escreve no arquivo de LOG
+
+    FILE *arquivo = fopen("log.txt", "a");  // Abre o arquivo em modo append (se existir)
+
+    if (arquivo == NULL)
+    {
+        // Se não for possível abrir o arquivo, imprime uma mensagem de erro e sai
+        printf("Erro ao abrir o arquivo de log.\n");
+        return 1;  // Retorno não zero para indicar erro
+    }
+
+    // Obter a hora e data atual
+    time_t rawtime;
+    struct tm *timeinfo;
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+
+    // Escreve as informações no arquivo
+    fprintf(arquivo, "\n---- Log Vaga ----\n");
+    fprintf(arquivo, "Data e hora: %s", asctime(timeinfo));  // Imprime a data e hora
+    fprintf(arquivo, "Tempo de execucao do metodo de particao: %.2f segundos\n", ((double)(clock() - inicio) / CLOCKS_PER_SEC));
+    fprintf(arquivo, "Numero de comparacoes: %d\n", comparacao);
+
+    // Fecha o arquivo
+    fclose(arquivo);
     printf("\nTempo de execução: %.6f segundos\n", (double)(clock() - inicio) / CLOCKS_PER_SEC);
     printf("Número de comparações: %d\n", comparacao);
 
     return numeroDeParticoes;
 }
 
-void intercalacaoOtimaUnificadaVagas(char nomeDaParticao[], int qtdParticoes, FILE *out)
-{
+// Função para realizar a intercalação otima de partições de vagas
+void intercalacaoOtimaUnificadaVagas(char nomeDaParticao[], int qtdParticoes, FILE *out) {
     FILE *particoes[qtdParticoes + 1];
     TVaga *registros[qtdParticoes + 1];
 
     clock_t inicio = clock();
     int comparacao = 0;
 
-    // Início da intercalação otimizada
-    for (int i = 0; i < qtdParticoes; i++)
-    {
+    // Fase de Interlecalação Otimizada
+    // Nesta fase, as partições são agrupadas em grupos de 4, e cada grupo é intercalado
+    // otimizadamente para ordenar os registros de todas as partições do grupo.
+
+    // Abre as partições de entrada e carrega os primeiros registros
+    for (int i = 0; i < qtdParticoes; i++) {
         char nomeArqParticao[20];
         snprintf(nomeArqParticao, sizeof(nomeArqParticao), "%s%d.dat", nomeDaParticao, i);
         particoes[i] = fopen(nomeArqParticao, "rb");
-        if (particoes[i] == NULL)
-        {
+        if (particoes[i] == NULL) {
             printf("Erro ao abrir o arquivo da partição %s\n", nomeArqParticao);
             exit(1);
         }
@@ -721,35 +754,33 @@ void intercalacaoOtimaUnificadaVagas(char nomeDaParticao[], int qtdParticoes, FI
         registros[i] = le_vaga(particoes[i]);
     }
 
+    // Define o tamanho do grupo para intercalação (neste caso, 4)
     int grupoSize = 4;
     int numGrupos = qtdParticoes / grupoSize;
 
-    for (int grupo = 0; grupo < qtdParticoes; grupo += 4)
-    {
+    // Itera sobre os grupos de partições
+    for (int grupo = 0; grupo < qtdParticoes; grupo += 4) {
+        // Prepara um array para os registros de cada grupo
         TVaga *grupoRegistros[4 * qtdParticoes];
         int idx = 0;
 
-        for (int i = grupo; i < grupo + 4 && i < qtdParticoes; i++)
-        {
-            while (registros[i] != NULL)
-            {
+        // Lê e mescla os registros de cada partição no grupo
+        for (int i = grupo; i < grupo + 4 && i < qtdParticoes; i++) {
+            while (registros[i] != NULL) {
                 comparacao++;
                 grupoRegistros[idx++] = registros[i];
                 registros[i] = le_vaga(particoes[i]);
 
-                if (idx >= 4 * qtdParticoes)
-                {
+                if (idx >= 4 * qtdParticoes) {
                     break;
                 }
             }
         }
 
-        for (int i = 0; i < idx - 1; i++)
-        {
-            for (int j = i + 1; j < idx; j++)
-            {
-                if (grupoRegistros[i]->numero > grupoRegistros[j]->numero)
-                {
+        // Ordena os registros do grupo
+        for (int i = 0; i < idx - 1; i++) {
+            for (int j = i + 1; j < idx; j++) {
+                if (grupoRegistros[i]->numero > grupoRegistros[j]->numero) {
                     comparacao++;
                     TVaga *temp = grupoRegistros[i];
                     grupoRegistros[i] = grupoRegistros[j];
@@ -758,39 +789,39 @@ void intercalacaoOtimaUnificadaVagas(char nomeDaParticao[], int qtdParticoes, FI
             }
         }
 
+        // Gera o nome da nova partição
         char nomeParticao[100];
         char str1[100];
         char str2[100] = ".dat";
-
         int numeroParticao = qtdParticoes + 1 + grupo / 4;
         sprintf(str1, "%d", numeroParticao);
         strcat(strcpy(nomeParticao, nomeDaParticao), str1);
         strcat(strcpy(nomeParticao, nomeParticao), str2);
 
+        // Cria a nova partição e salva os registros do grupo
         FILE *filePartition = fopen(nomeParticao, "wb+");
-        if (filePartition == NULL)
-        {
+        if (filePartition == NULL) {
             printf("Erro ao criar a partição %s\n", nomeParticao);
             exit(1);
         }
 
-        for (int i = 0; i < idx; i++)
-        {
+        for (int i = 0; i < idx; i++) {
             salva_vaga(grupoRegistros[i], filePartition);
         }
 
         fclose(filePartition);
     }
-    // Fim da intercalação otimizada
+    // Fim da Fase de Interlecalação Otimizada
 
-    // Início da união das partições ordenadas
-    for (int i = 0; i < qtdParticoes; i++)
-    {
+    // Fase de União das Partições Ordenadas
+    // Nesta fase, as partições ordenadas são unificadas para formar um único arquivo de saída.
+
+    // Abre novamente as partições ordenadas
+    for (int i = 0; i < qtdParticoes; i++) {
         char nomeArqParticao[20];
         snprintf(nomeArqParticao, sizeof(nomeArqParticao), "%s%d.dat", nomeDaParticao, i);
         particoes[i] = fopen(nomeArqParticao, "rb");
-        if (particoes[i] == NULL)
-        {
+        if (particoes[i] == NULL) {
             printf("Erro ao abrir o arquivo da partição %s\n", nomeArqParticao);
             exit(1);
         }
@@ -798,47 +829,71 @@ void intercalacaoOtimaUnificadaVagas(char nomeDaParticao[], int qtdParticoes, FI
         registros[i] = le_vaga(particoes[i]);
     }
 
-    while (1)
-    {
+    // Realiza a união das partições ordenadas
+    while (1) {
         int menorNumero = INT_MAX;
         int idxMenor = -1;
 
-        for (int i = 0; i < qtdParticoes; i++)
-        {
-            if (registros[i] != NULL && registros[i]->numero < menorNumero)
-            {
+        // Encontra o menor registro entre todas as partições
+        for (int i = 0; i < qtdParticoes; i++) {
+            if (registros[i] != NULL && registros[i]->numero < menorNumero) {
                 menorNumero = registros[i]->numero;
                 idxMenor = i;
             }
         }
 
-        if (idxMenor == -1)
-        {
+        if (idxMenor == -1) {
             break;
         }
 
+        // Salva o menor registro na saída
         salva_vaga(registros[idxMenor], out);
         registros[idxMenor] = le_vaga(particoes[idxMenor]);
     }
 
-    for (int i = 0; i < qtdParticoes; i++)
-    {
+    // Fecha as partições e remove os arquivos temporários
+    for (int i = 0; i < qtdParticoes; i++) {
         fclose(particoes[i]);
         char nomeArqParticao[20];
         snprintf(nomeArqParticao, sizeof(nomeArqParticao), "%s%d.dat", nomeDaParticao, i);
         remove(nomeArqParticao);
     }
-    // Fim da união das partições ordenadas
+    // Fim da Fase de União das Partições Ordenadas
 
     // Liberação de memória, finalização do processo e salvando no log
-    for (int i = 0; i < qtdParticoes; i++)
-    {
+    for (int i = 0; i < qtdParticoes; i++) {
         free(registros[i]);
     }
 
+    // Calcula o tempo de execução
     clock_t fim = clock();
     double tempo = (double)(fim - inicio) / CLOCKS_PER_SEC;
 
+    // Escreve no arquivo de LOG
+    FILE *arquivo = fopen("log.txt", "a"); // Abre o arquivo em modo append (se existir)
+
+    if (arquivo == NULL) {
+        // Se não for possível abrir o arquivo, imprime uma mensagem de erro e sai
+        printf("Erro ao abrir o arquivo de log.\n");
+        return; // Não há retorno de erro, apenas uma mensagem é exibida
+    }
+
+    // Obter a hora e data atual
+    time_t rawtime;
+    struct tm *timeinfo;
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+
+    // Escreve as informações no arquivo de LOG
+    fprintf(arquivo, "\n---- Log Vaga ----\n");
+    fprintf(arquivo, "Data e hora: %s", asctime(timeinfo)); // Imprime a data e hora
+    fprintf(arquivo, "Tempo de execucao do metodo de intercalacao otima: %.2f segundos\n", tempo);
+    fprintf(arquivo, "Numero de comparacoes: %d\n", comparacao);
+
+    // Fecha o arquivo de LOG
+    fclose(arquivo);
+
+    // Imprime informações na saída padrão
     printf("\nTempo de execucao do metodo de intercalacao otima: %.2f segundos\n", tempo);
     printf("Numero de comparacoes: %d\n\n\n", comparacao);
 }

@@ -591,27 +591,21 @@ int selecaoSubstituicaoClientes(FILE *in, char nomeDaParticao[])
     // Imprimir o tempo de execução e o número de comparações
     printf("\nTempo de execução: %.6f segundos\n", (double)(clock() - inicio) / CLOCKS_PER_SEC);
     printf("Número de comparações: %d\n", comparacao);
-
-
-
+}
 void intercalacaoOtimaUnificadaClientes(char nomeDaParticao[], int qtdParticoes, FILE *out)
 {
-    // Declaração dos arrays de ponteiros para os arquivos de partição e registros dos clientes
     FILE *particoes[qtdParticoes + 1];
     TCliente *registros[qtdParticoes + 1];
 
-    // Inicialização de variáveis
-    clock_t inicio = clock(); // Marca o início da execução
-    int comparacao = 0; // Contador de comparações de CPF
 
-    // Início da etapa de intercalação otimizada
+    clock_t inicio = clock();
+    int comparacao = 0;
+
+    // Início da intercalação otimizada
     for (int i = 0; i < qtdParticoes; i++)
     {
-        // Construção do nome do arquivo da partição
         char nomeArqParticao[20];
         snprintf(nomeArqParticao, sizeof(nomeArqParticao), "%s%d.dat", nomeDaParticao, i);
-
-        // Abertura do arquivo da partição em modo leitura binária
         particoes[i] = fopen(nomeArqParticao, "rb");
         if (particoes[i] == NULL)
         {
@@ -619,26 +613,22 @@ void intercalacaoOtimaUnificadaClientes(char nomeDaParticao[], int qtdParticoes,
             exit(1);
         }
 
-        // Leitura dos registros da partição
         registros[i] = le_clientes(particoes[i]);
     }
 
-    // Divisão das partições em grupos de 4 e intercalação otima
     int grupoSize = 4;
     int numGrupos = qtdParticoes / grupoSize;
 
     for (int grupo = 0; grupo < qtdParticoes; grupo += 4)
     {
-        // Array para armazenar registros dos grupos
         TCliente *grupoRegistros[4 * qtdParticoes];
         int idx = 0;
 
-        // Leitura e organização dos registros dos grupos
         for (int i = grupo; i < grupo + 4 && i < qtdParticoes; i++)
         {
             while (registros[i] != NULL)
             {
-                comparacao++; // Conta cada comparação de CPF
+                comparacao++;
                 grupoRegistros[idx++] = registros[i];
                 registros[i] = le_clientes(particoes[i]);
 
@@ -649,15 +639,13 @@ void intercalacaoOtimaUnificadaClientes(char nomeDaParticao[], int qtdParticoes,
             }
         }
 
-        // Ordenação dos registros dentro do grupo
         for (int i = 0; i < idx - 1; i++)
         {
             for (int j = i + 1; j < idx; j++)
             {
                 if (grupoRegistros[i]->cpf > grupoRegistros[j]->cpf)
                 {
-                    comparacao++; // Conta cada comparação de CPF
-                    // Troca de registros para manter a ordem
+                    comparacao++;
                     TCliente *temp = grupoRegistros[i];
                     grupoRegistros[i] = grupoRegistros[j];
                     grupoRegistros[j] = temp;
@@ -665,16 +653,15 @@ void intercalacaoOtimaUnificadaClientes(char nomeDaParticao[], int qtdParticoes,
             }
         }
 
-        // Construção do nome do arquivo da nova partição
         char nomeParticao[100];
         char str1[100];
         char str2[100] = ".dat";
+
         int numeroParticao = qtdParticoes + 1 + grupo / 4;
         sprintf(str1, "%d", numeroParticao);
         strcat(strcpy(nomeParticao, nomeDaParticao), str1);
         strcat(strcpy(nomeParticao, nomeParticao), str2);
 
-        // Criação da nova partição
         FILE *filePartition = fopen(nomeParticao, "wb+");
         if (filePartition == NULL)
         {
@@ -682,26 +669,22 @@ void intercalacaoOtimaUnificadaClientes(char nomeDaParticao[], int qtdParticoes,
             exit(1);
         }
 
-        // Gravação dos registros ordenados na nova partição
         for (int i = 0; i < idx; i++)
         {
             salva_cliente(grupoRegistros[i], filePartition);
         }
 
-        // Fechamento do arquivo da nova partição
         fclose(filePartition);
+
     }
     // Fim da intercalação otimizada
 
-    // Início da etapa de união das partições ordenadas
-    // Reabertura das partições e leitura dos registros para a etapa de união
+    // Início da união das partições ordenadas
+
     for (int i = 0; i < qtdParticoes; i++)
     {
-        // Construção do nome do arquivo da partição
         char nomeArqParticao[20];
         snprintf(nomeArqParticao, sizeof(nomeArqParticao), "%s%d.dat", nomeDaParticao, i);
-
-        // Abertura do arquivo da partição em modo leitura binária
         particoes[i] = fopen(nomeArqParticao, "rb");
         if (particoes[i] == NULL)
         {
@@ -709,17 +692,14 @@ void intercalacaoOtimaUnificadaClientes(char nomeDaParticao[], int qtdParticoes,
             exit(1);
         }
 
-        // Leitura dos registros da partição para a etapa de união
         registros[i] = le_clientes(particoes[i]);
     }
 
-    // União das partições ordenadas
     while (1)
     {
         int menorCpf = INT_MAX;
         int idxMenor = -1;
 
-        // Encontrar o menor registro de todas as partições
         for (int i = 0; i < qtdParticoes; i++)
         {
             if (registros[i] != NULL && registros[i]->cpf < menorCpf)
@@ -729,42 +709,39 @@ void intercalacaoOtimaUnificadaClientes(char nomeDaParticao[], int qtdParticoes,
             }
         }
 
-        // Se não há mais registros válidos em todas as partições, terminamos a união
         if (idxMenor == -1)
         {
             break;
         }
 
-        // Grava o menor registro encontrado no arquivo de saída
         salva_cliente(registros[idxMenor], out);
-        // Lê o próximo registro da partição que forneceu o menor registro
         registros[idxMenor] = le_clientes(particoes[idxMenor]);
     }
-    // Fim da etapa de união das partições ordenadas
 
-    // Fechamento das partições de entrada após a união
     for (int i = 0; i < qtdParticoes; i++)
     {
         fclose(particoes[i]);
-        // Remoção das partições originais após a união
         char nomeArqParticao[20];
         snprintf(nomeArqParticao, sizeof(nomeArqParticao), "%s%d.dat", nomeDaParticao, i);
         remove(nomeArqParticao);
     }
 
-    // Liberação de memória, finalização do processo e escrita no arquivo de log
+
+    // Fim da união das partições ordenadas
+
+    // Liberação de memória, finalização do processo e salvando no log
     for (int i = 0; i < qtdParticoes; i++)
     {
-        // Liberação da memória alocada para os registros
         free(registros[i]);
     }
 
-    // Cálculo do tempo de execução
-    clock_t fim = clock(); // Marca o fim da execução
-    double tempo = (double)(fim - inicio) / CLOCKS_PER_SEC; // Calcula o tempo de execução em segundos
+    clock_t fim = clock();
+    double tempo = (double)(fim - inicio) / CLOCKS_PER_SEC;
 
-    // Escreve no arquivo de LOG
+    //Escreve no arquivo de LOG
+
     FILE *arquivo = fopen("log.txt", "a");  // Abre o arquivo em modo append (se existir)
+
     if (arquivo == NULL)
     {
         // Se não for possível abrir o arquivo, imprime uma mensagem de erro e sai
@@ -778,14 +755,12 @@ void intercalacaoOtimaUnificadaClientes(char nomeDaParticao[], int qtdParticoes,
     time(&rawtime);
     timeinfo = localtime(&rawtime);
 
-    // Escreve as informações no arquivo de log
+    // Escreve as informações no arquivo
     fprintf(arquivo, "\n---- Log Cliente ----\n");
     fprintf(arquivo, "Data e hora: %s", asctime(timeinfo));  // Imprime a data e hora
     fprintf(arquivo, "Tempo de execucao do metodo de intercalacao otima: %.2f segundos\n", tempo);
     fprintf(arquivo, "Numero de comparacoes: %d\n", comparacao);
 
-    // Fecha o arquivo de log
+    // Fecha o arquivo
     fclose(arquivo);
-
-    // Finalização da função
 }
