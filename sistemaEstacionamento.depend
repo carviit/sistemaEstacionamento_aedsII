@@ -1,0 +1,86 @@
+# depslib dependency file v1.0
+1691977354 source:/home/carlos/Documentos/workspace/sistemaEstacionamento/funcionario.c
+	"funcionario.h"
+	<string.h>
+	<stdlib.h>
+	<time.h>
+	<stdarg.h>
+	<dirent.h>
+	<limits.h>
+
+1691967399 /home/carlos/Documentos/workspace/sistemaEstacionamento/funcionario.h
+	<stdlib.h>
+	<stdio.h>
+	<time.h>
+	<dirent.h>
+
+1691430537 source:/home/carlos/Documentos/workspace/sistemaEstacionamento/carro.c
+	"cliente.h"
+	<string.h>
+	<stdlib.h>
+	<time.h>
+	<stdarg.h>
+	<dirent.h>
+
+1691963844 /home/carlos/Documentos/workspace/sistemaEstacionamento/cliente.h
+	<stdlib.h>
+	<stdio.h>
+	"carro.h"
+
+1691436810 /home/carlos/Documentos/workspace/sistemaEstacionamento/carro.h
+	<stdlib.h>
+	<stdio.h>
+
+1691977294 source:/home/carlos/Documentos/workspace/sistemaEstacionamento/cliente.c
+	"cliente.h"
+	<string.h>
+	<stdlib.h>
+	<time.h>
+	<limits.h>
+	<stdarg.h>
+	<dirent.h>
+
+1691436810 source:/home/carlos/Documentos/workspace/sistemaEstacionamento/main.c
+	<stdio.h>
+	<stdlib.h>
+	"funcionario.h"
+	"vaga.h"
+	"interface.h"
+
+1691965385 /home/carlos/Documentos/workspace/sistemaEstacionamento/vaga.h
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+
+1691963769 /home/carlos/Documentos/workspace/sistemaEstacionamento/interface.h
+	<stdio.h>
+	<stdlib.h>
+	<dirent.h>
+	"funcionario.h"
+	"cliente.h"
+	"carro.h"
+	"vaga.h"
+
+1691977094 source:/home/carlos/Documentos/workspace/sistemaEstacionamento/vaga.c
+	"vaga.h"
+	<string.h>
+	<stdlib.h>
+	<time.h>
+	<stdarg.h>
+	<dirent.h>
+	<limits.h>
+
+1691977542 source:/home/carlos/Documentos/workspace/sistemaEstacionamento/interface.c
+	<stdio.h>
+	<stdlib.h>
+	"interface.h"
+	<dirent.h>
+
+1691878281 /home/carlos/Documentos/workspace/sistemaEstacionamento/arvore_vencedores_clientes.h
+	"cliente.h"
+
+1691882206 source:/home/carlos/Documentos/workspace/sistemaEstacionamento/arvore_vencedores_clientes.c
+	"arvore_vencedores_clientes.h"
+	"cliente.h"
+	<stdlib.h>
+
